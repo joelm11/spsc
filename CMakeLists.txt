@@ -20,7 +20,7 @@ endif()
 
 
 # Only enable testing and FetchContent if this is the main project
-if(STANDALONE_BUILD AND DEBUG)
+if(STANDALONE_BUILD AND CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
     # Pull in Google Test
     message(STATUS "Unit tests enabled")
     include(FetchContent)
@@ -32,4 +32,5 @@ if(STANDALONE_BUILD AND DEBUG)
     enable_testing()
     include(GoogleTest)
     include("cmake/create_ut.cmake")
+    add_subdirectory(src/test)
 endif()
