@@ -1,6 +1,6 @@
+#include "../spsc_queue.hh"
 #include <gtest/gtest.h>
-#include <iostream>
 
-TEST(SPSCQueue, Ctor) {
-    std::cout << "Hey\n";
-}
+using namespace spsc;
+
+TEST(SPSCQueue, Ctor) { LQueue<int, 16> foo; }
