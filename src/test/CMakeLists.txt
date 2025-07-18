@@ -1,1 +1,1 @@
-unit_test(spsc_queue_test spsc_queue_test.cc "")
+unit_test(spsc_queue_test lqueue_test.cc "")

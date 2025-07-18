@@ -1,4 +1,4 @@
-#include "../spsc_queue.hh"
+#include "../lqueue.hh"
 #include <chrono>
 #include <cstddef>
 #include <gtest/gtest.h>
