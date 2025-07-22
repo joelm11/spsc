@@ -5,20 +5,20 @@
 
 const size_t kQueueSize = 2048;
 
-using QueueType = spsc::LQueue<int, kQueueSize>;
-
-static void BM_LQueuePush(benchmark::State &state) {
-  spsc::LQueue<int, kQueueSize> queue;
+// Template for push benchmark
+template <typename QueueType>
+static void BM_QueuePush(benchmark::State &state) {
+  QueueType queue;
   for (auto _ : state) {
     for (int i = 0; i < kQueueSize; ++i) {
       queue.push(i);
     }
   }
 }
-BENCHMARK(BM_LQueuePush);
 
-static void BM_LQueuePop(benchmark::State &state) {
-  spsc::LQueue<int, kQueueSize> queue;
+// Template for pop benchmark
+template <typename QueueType> static void BM_QueuePop(benchmark::State &state) {
+  QueueType queue;
   for (int i = 0; i < kQueueSize; ++i) {
     queue.push(i);
   }
@@ -28,11 +28,12 @@ static void BM_LQueuePop(benchmark::State &state) {
     }
   }
 }
-BENCHMARK(BM_LQueuePop);
 
-static void BM_LQueueProduceConsume(benchmark::State &state) {
+// Template for produce-consume benchmark
+template <typename QueueType>
+static void BM_QueueProduceConsume(benchmark::State &state) {
   for (auto _ : state) {
-    spsc::LQueue<int, kQueueSize> queue;
+    QueueType queue;
     std::atomic<bool> start_flag{false};
 
     auto producer = [&queue, &start_flag]() {
@@ -65,6 +66,11 @@ static void BM_LQueueProduceConsume(benchmark::State &state) {
     consumer_thread.join();
   }
 }
-BENCHMARK(BM_LQueueProduceConsume);
+
+// Register benchmarks for LQueue
+using LQueueType = spsc::LQueue<int, kQueueSize>;
+BENCHMARK_TEMPLATE(BM_QueuePush, LQueueType);
+BENCHMARK_TEMPLATE(BM_QueuePop, LQueueType);
+BENCHMARK_TEMPLATE(BM_QueueProduceConsume, LQueueType);
 
 BENCHMARK_MAIN();
