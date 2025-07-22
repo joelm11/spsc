@@ -1,38 +1,40 @@
 #pragma once
+#include "queue_base.hh"
 #include <cstddef>
 #include <cstdlib>
 #include <mutex>
 
 namespace spsc {
-template <typename T, size_t N> class LQueue {
+template <typename T, size_t N>
+class LQueue : public QueueBase<T, LQueue<T, N>> {
 public:
-  // Accessors
-  T front() noexcept {
+  // Implementation of QueueBase methods
+  T front_impl() noexcept {
     std::lock_guard<std::mutex> lock(m_);
     return data_[front_];
   }
 
-  const T back() const noexcept {
+  const T back_impl() const noexcept {
     std::lock_guard<std::mutex> lock(m_);
     return data_[(back_ + kCapacity_ - 1) % kCapacity_];
   }
 
-  // Capacity
-  size_t size() const {
+  size_t size_impl() const {
     std::lock_guard<std::mutex> lock(m_);
     return size_is();
   }
-  bool empty() const {
+
+  bool empty_impl() const {
     std::lock_guard<std::mutex> lock(m_);
     return is_empty();
   }
-  bool full() const {
+
+  bool full_impl() const {
     std::lock_guard<std::mutex> lock(m_);
     return is_full();
   }
 
-  // Modifiers
-  bool push(const T &val) {
+  bool push_impl(const T &val) {
     std::lock_guard<std::mutex> lock(m_);
     if (is_full()) {
       return false;
@@ -43,7 +45,7 @@ public:
     }
   }
 
-  bool pop() {
+  bool pop_impl() {
     std::lock_guard<std::mutex> lock(m_);
     if (is_empty()) {
       return false;

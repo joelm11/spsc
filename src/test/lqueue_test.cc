@@ -81,7 +81,8 @@ TEST_F(LQueueTest, ThreadSafety) {
     }
   };
 
-  std::thread prod_thread(produce), con_thread(consume);
+  std::thread prod_thread(produce);
+  std::thread con_thread(consume);
 
   prod_thread.join();
   con_thread.join();
