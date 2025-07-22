@@ -1,3 +1,4 @@
+#include "../aqueue.hh"
 #include "../lqueue.hh"
 #include <chrono>
 #include <gtest/gtest.h>
@@ -8,7 +9,7 @@ using namespace spsc;
 constexpr size_t kSz = 2048;
 
 // Define the types to test
-using QueueTypes = ::testing::Types<LQueue<int, kSz>>;
+using QueueTypes = ::testing::Types<LQueue<int, kSz>, AQueue<int, kSz>>;
 
 // Typed test fixture
 template <typename T> class QueueTest : public ::testing::Test {

@@ -1,1 +1,1 @@
-benchmark(lqueue_benchmark lqueue_bench.cc)
+benchmark(queue_benchmark queue_bench.cc)
