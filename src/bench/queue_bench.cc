@@ -68,12 +68,14 @@ static void BM_QueueProduceConsume(benchmark::State &state) {
   }
 }
 
-// Register benchmarks for LQueue
+// Register benchmarks for queue types
 using LQueueType = spsc::LQueue<int, kQueueSize>;
 using AQueueType = spsc::AQueue<int, kQueueSize>;
+
 BENCHMARK_TEMPLATE(BM_QueuePush, LQueueType);
 BENCHMARK_TEMPLATE(BM_QueuePop, LQueueType);
 BENCHMARK_TEMPLATE(BM_QueueProduceConsume, LQueueType);
+
 BENCHMARK_TEMPLATE(BM_QueuePush, AQueueType);
 BENCHMARK_TEMPLATE(BM_QueuePop, AQueueType);
 BENCHMARK_TEMPLATE(BM_QueueProduceConsume, AQueueType);
