@@ -22,6 +22,11 @@ public:
 
   bool pop() noexcept { return derived().pop(); }
 
+  // New methods that also return the value
+  bool push_val(const T &val) noexcept { return derived().push_val(val); }
+
+  bool pop_val(T &val) noexcept { return derived().pop_val(val); }
+
 private:
   Derived &derived() noexcept { return static_cast<Derived &>(*this); }
 

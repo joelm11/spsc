@@ -20,7 +20,7 @@ endif()
 
 
 # Only enable testing and FetchContent if this is the main project
-if(STANDALONE_BUILD AND CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+if(STANDALONE_BUILD)
     # Pull in Google Test
     message(STATUS "Unit tests enabled")
     include(FetchContent)

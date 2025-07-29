@@ -71,6 +71,32 @@ public:
     return true;
   }
 
+  bool push_val(const T &val) noexcept {
+    const size_t kFront = front_.load(std::memory_order::relaxed);
+    const size_t kBack = back_.load(std::memory_order::acquire);
+
+    // Full
+    if ((kBack + 1) % kCapacity_ == kFront) {
+      return false;
+    }
+    data_[kBack] = val;
+    back_.store((kBack + 1) % kCapacity_, std::memory_order::release);
+    return true;
+  }
+
+  bool pop_val(T &val) noexcept {
+    const size_t kFront = front_.load(std::memory_order::acquire);
+    const size_t kBack = back_.load(std::memory_order::relaxed);
+
+    // Empty
+    if (kFront == kBack) {
+      return false;
+    }
+    val = data_[kFront];
+    front_.store((kFront + 1) % kCapacity_, std::memory_order::release);
+    return true;
+  }
+
 private:
   static constexpr size_t kCapacity_ = N + 1;
   alignas(128) std::atomic<size_t> front_;

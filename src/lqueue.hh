@@ -52,6 +52,26 @@ public:
     return true;
   }
 
+  bool push_val(const T &val) noexcept {
+    std::lock_guard<std::mutex> lock(m_);
+    if (is_full()) {
+      return false;
+    }
+    data_[back_] = val;
+    back_ = (back_ + 1) % kCapacity_;
+    return true;
+  }
+
+  bool pop_val(T &val) noexcept {
+    std::lock_guard<std::mutex> lock(m_);
+    if (is_empty()) {
+      return false;
+    }
+    val = data_[front_];
+    front_ = (front_ + 1) % kCapacity_;
+    return true;
+  }
+
 private:
   inline size_t size_is() const noexcept {
     return back_ >= front_ ? back_ - front_ : kCapacity_ - (front_ - back_);
