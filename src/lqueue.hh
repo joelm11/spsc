@@ -8,6 +8,8 @@ namespace spsc {
 template <typename T, size_t N>
 class LQueue : public QueueBase<T, LQueue<T, N>> {
 public:
+  using ValueType = T;
+
   T front() noexcept {
     std::lock_guard<std::mutex> lock(m_);
     return data_[front_];

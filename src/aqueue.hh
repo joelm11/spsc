@@ -9,6 +9,8 @@ namespace spsc {
 template <typename T, size_t N>
 class AQueue : public QueueBase<T, AQueue<T, N>> {
 public:
+  using ValueType = T;
+
   AQueue() : front_(0), back_(0) {}
 
   // Accessors
