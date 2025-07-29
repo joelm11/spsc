@@ -13,34 +13,34 @@ public:
 
   // Accessors
   T front() noexcept {
-    const size_t kIdx = front_.load(std::memory_order::relaxed);
+    const size_t kIdx = front_.load(std::memory_order::acquire);
     return data_[kIdx];
   }
 
   T back() const noexcept {
     const size_t kIdx =
-        (back_.load(std::memory_order::relaxed) + kCapacity_ - 1) % kCapacity_;
+        (back_.load(std::memory_order::acquire) + kCapacity_ - 1) % kCapacity_;
     return data_[kIdx];
   }
 
   // Capacity
   size_t size() const noexcept {
-    const size_t kFront = front_.load(std::memory_order::relaxed);
-    const size_t kBack = back_.load(std::memory_order::relaxed);
+    const size_t kFront = front_.load(std::memory_order::acquire);
+    const size_t kBack = back_.load(std::memory_order::acquire);
 
     return kBack >= kFront ? kBack - kFront : kCapacity_ - (kFront - kBack);
   }
 
   bool empty() const noexcept {
-    const size_t kFront = front_.load(std::memory_order::relaxed);
-    const size_t kBack = back_.load(std::memory_order::relaxed);
+    const size_t kFront = front_.load(std::memory_order::acquire);
+    const size_t kBack = back_.load(std::memory_order::acquire);
 
     return kFront == kBack;
   }
 
   bool full() const noexcept {
-    const size_t kFront = front_.load(std::memory_order::relaxed);
-    const size_t kBack = back_.load(std::memory_order::relaxed);
+    const size_t kFront = front_.load(std::memory_order::acquire);
+    const size_t kBack = back_.load(std::memory_order::acquire);
 
     return (kBack + 1) % kCapacity_ == kFront;
   }
@@ -50,6 +50,7 @@ public:
     const size_t kFront = front_.load(std::memory_order::relaxed);
     const size_t kBack = back_.load(std::memory_order::acquire);
 
+    // Full
     if ((kBack + 1) % kCapacity_ == kFront) {
       return false;
     }
@@ -62,6 +63,7 @@ public:
     const size_t kFront = front_.load(std::memory_order::acquire);
     const size_t kBack = back_.load(std::memory_order::relaxed);
 
+    // Empty
     if (kFront == kBack) {
       return false;
     }
@@ -71,8 +73,8 @@ public:
 
 private:
   static constexpr size_t kCapacity_ = N + 1;
-  alignas(64) std::atomic<size_t> front_;
-  alignas(64) std::atomic<size_t> back_;
-  alignas(64) T data_[kCapacity_];
+  alignas(128) std::atomic<size_t> front_;
+  alignas(128) std::atomic<size_t> back_;
+  alignas(128) T data_[kCapacity_];
 };
 } // namespace spsc

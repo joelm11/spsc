@@ -1,6 +1,5 @@
 #include "../aqueue.hh"
 #include "../lqueue.hh"
-#include <chrono>
 #include <gtest/gtest.h>
 #include <thread>
 
@@ -61,11 +60,10 @@ TYPED_TEST(QueueTest, Modifiers) {
   EXPECT_EQ(this->queue.size(), 0);
 }
 
-TYPED_TEST(QueueTest, ThreadSafety) {
+TYPED_TEST(QueueTest, BasicThreadSafety) {
   const auto produce = [this]() {
     for (int i = 0; i < kSz; ++i) {
-      this->queue.push(i);
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
+      EXPECT_TRUE(this->queue.push(i));
     }
   };
 
@@ -75,7 +73,7 @@ TYPED_TEST(QueueTest, ThreadSafety) {
     while (i < kSz) {
       if (!this->queue.empty()) {
         vals.push_back(this->queue.front());
-        this->queue.pop();
+        EXPECT_TRUE(this->queue.pop());
         ++i;
       }
     }
@@ -89,6 +87,52 @@ TYPED_TEST(QueueTest, ThreadSafety) {
 
   EXPECT_EQ(vals.size(), kSz);
   for (int i = 0; i < vals.size(); ++i) {
+    EXPECT_EQ(vals[i], i);
+  }
+}
+
+TYPED_TEST(QueueTest, TightInterleavedThreadSafety) {
+  constexpr int kTestSize = 20000;
+  constexpr int kQueueCapacity = 4; // Intentionally small to force contention
+
+  std::vector<int> vals;
+  vals.reserve(kTestSize);
+  std::atomic<bool> done{false};
+
+  const auto produce = [this]() {
+    for (int i = 0; i < kTestSize;) {
+      if (this->queue.push(i)) {
+        ++i;
+      } else {
+        std::this_thread::yield(); // encourage CPU handoff
+      }
+    }
+  };
+
+  const auto consume = [this, &vals, &done]() {
+    int i = 0;
+    while (i < kTestSize) {
+      int val;
+      if (!this->queue.empty()) {
+        val = this->queue.front();
+        EXPECT_TRUE(this->queue.pop());
+        vals.push_back(val);
+        ++i;
+      } else {
+        std::this_thread::yield();
+      }
+    }
+    done.store(true, std::memory_order_release);
+  };
+
+  std::thread prod_thread(produce);
+  std::thread con_thread(consume);
+
+  prod_thread.join();
+  con_thread.join();
+
+  EXPECT_EQ(vals.size(), kTestSize);
+  for (int i = 0; i < kTestSize; ++i) {
     EXPECT_EQ(vals[i], i);
   }
 }
