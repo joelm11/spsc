@@ -6,25 +6,27 @@ namespace spsc {
 template <typename T, class Derived> class QueueBase {
 public:
   // Accessors
-  T front() noexcept { return derived().front_impl(); }
+  T front() noexcept { return derived().front(); }
 
-  const T back() const noexcept { return derived().back_impl(); }
+  const T back() const noexcept { return derived().back(); }
 
   // Capacity
-  size_t size() const { return derived().size_impl(); }
+  size_t size() const noexcept { return derived().size(); }
 
-  bool empty() const { return derived().empty_impl(); }
+  bool empty() const noexcept { return derived().empty(); }
 
-  bool full() const { return derived().full_impl(); }
+  bool full() const noexcept { return derived().full(); }
 
   // Modifiers
-  bool push(const T &val) { return derived().push_impl(val); }
+  bool push(const T &val) noexcept { return derived().push(val); }
 
-  bool pop() { return derived().pop_impl(); }
+  bool pop() noexcept { return derived().pop(); }
 
 private:
-  Derived &derived() { return static_cast<Derived &>(*this); }
+  Derived &derived() noexcept { return static_cast<Derived &>(*this); }
 
-  const Derived &derived() const { return static_cast<const Derived &>(*this); }
+  const Derived &derived() const noexcept {
+    return static_cast<const Derived &>(*this);
+  }
 };
 } // namespace spsc

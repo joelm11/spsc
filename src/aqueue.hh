@@ -11,8 +11,20 @@ class AQueue : public QueueBase<T, AQueue<T, N>> {
 public:
   AQueue() : front_(0), back_(0) {}
 
+  // Accessors
+  T front() noexcept {
+    size_t f = front_.load(std::memory_order_relaxed);
+    return data_[f];
+  }
+
+  const T back() const noexcept {
+    size_t b = back_.load(std::memory_order_relaxed);
+    size_t last = (b + kCapacity_ - 1) % kCapacity_;
+    return data_[last];
+  }
+
   // Modifiers
-  bool push_impl(const T &val) noexcept {
+  bool push(const T &val) noexcept {
     size_t b = back_.load(std::memory_order_relaxed);
     size_t next = (b + 1) % kCapacity_;
     if (next == front_.load(std::memory_order_acquire))
@@ -23,7 +35,7 @@ public:
     return true;
   }
 
-  bool pop_impl() noexcept {
+  bool pop() noexcept {
     size_t f = front_.load(std::memory_order_relaxed);
     if (f == back_.load(std::memory_order_acquire))
       return false; // empty
@@ -32,31 +44,19 @@ public:
     return true;
   }
 
-  // Accessors
-  T front_impl() noexcept {
-    size_t f = front_.load(std::memory_order_relaxed);
-    return data_[f];
-  }
-
-  const T back_impl() const noexcept {
-    size_t b = back_.load(std::memory_order_relaxed);
-    size_t last = (b + kCapacity_ - 1) % kCapacity_;
-    return data_[last];
-  }
-
   // Capacity
-  size_t size_impl() const noexcept {
+  size_t size() const noexcept {
     size_t b = back_.load(std::memory_order_acquire);
     size_t f = front_.load(std::memory_order_acquire);
     return b >= f ? b - f : kCapacity_ - (f - b);
   }
 
-  bool empty_impl() const noexcept {
+  bool empty() const noexcept {
     return front_.load(std::memory_order_acquire) ==
            back_.load(std::memory_order_acquire);
   }
 
-  bool full_impl() const noexcept {
+  bool full() const noexcept {
     size_t b = back_.load(std::memory_order_relaxed);
     size_t next = (b + 1) % kCapacity_;
     return next == front_.load(std::memory_order_acquire);
