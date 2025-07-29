@@ -13,53 +13,60 @@ public:
 
   // Accessors
   T front() noexcept {
-    size_t f = front_.load(std::memory_order_relaxed);
-    return data_[f];
+    const size_t kIdx = front_.load(std::memory_order::relaxed);
+    return data_[kIdx];
   }
 
-  const T back() const noexcept {
-    size_t b = back_.load(std::memory_order_relaxed);
-    size_t last = (b + kCapacity_ - 1) % kCapacity_;
-    return data_[last];
-  }
-
-  // Modifiers
-  bool push(const T &val) noexcept {
-    size_t b = back_.load(std::memory_order_relaxed);
-    size_t next = (b + 1) % kCapacity_;
-    if (next == front_.load(std::memory_order_acquire))
-      return false; // full
-
-    data_[b] = val;
-    back_.store(next, std::memory_order_release);
-    return true;
-  }
-
-  bool pop() noexcept {
-    size_t f = front_.load(std::memory_order_relaxed);
-    if (f == back_.load(std::memory_order_acquire))
-      return false; // empty
-
-    front_.store((f + 1) % kCapacity_, std::memory_order_release);
-    return true;
+  T back() const noexcept {
+    const size_t kIdx =
+        (back_.load(std::memory_order::relaxed) + kCapacity_ - 1) % kCapacity_;
+    return data_[kIdx];
   }
 
   // Capacity
   size_t size() const noexcept {
-    size_t b = back_.load(std::memory_order_acquire);
-    size_t f = front_.load(std::memory_order_acquire);
-    return b >= f ? b - f : kCapacity_ - (f - b);
+    const size_t kFront = front_.load(std::memory_order::relaxed);
+    const size_t kBack = back_.load(std::memory_order::relaxed);
+
+    return kBack >= kFront ? kBack - kFront : kCapacity_ - (kFront - kBack);
   }
 
   bool empty() const noexcept {
-    return front_.load(std::memory_order_acquire) ==
-           back_.load(std::memory_order_acquire);
+    const size_t kFront = front_.load(std::memory_order::relaxed);
+    const size_t kBack = back_.load(std::memory_order::relaxed);
+
+    return kFront == kBack;
   }
 
   bool full() const noexcept {
-    size_t b = back_.load(std::memory_order_relaxed);
-    size_t next = (b + 1) % kCapacity_;
-    return next == front_.load(std::memory_order_acquire);
+    const size_t kFront = front_.load(std::memory_order::relaxed);
+    const size_t kBack = back_.load(std::memory_order::relaxed);
+
+    return (kBack + 1) % kCapacity_ == kFront;
+  }
+
+  // Modifiers
+  bool push(const T &val) noexcept {
+    const size_t kFront = front_.load(std::memory_order::relaxed);
+    const size_t kBack = back_.load(std::memory_order::acquire);
+
+    if ((kBack + 1) % kCapacity_ == kFront) {
+      return false;
+    }
+    data_[kBack] = val;
+    back_.store((kBack + 1) % kCapacity_, std::memory_order::release);
+    return true;
+  }
+
+  bool pop() noexcept {
+    const size_t kFront = front_.load(std::memory_order::acquire);
+    const size_t kBack = back_.load(std::memory_order::relaxed);
+
+    if (kFront == kBack) {
+      return false;
+    }
+    front_.store((kFront + 1) % kCapacity_, std::memory_order::release);
+    return true;
   }
 
 private:
@@ -68,5 +75,4 @@ private:
   alignas(64) std::atomic<size_t> back_;
   alignas(64) T data_[kCapacity_];
 };
-
 } // namespace spsc

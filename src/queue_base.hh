@@ -8,7 +8,7 @@ public:
   // Accessors
   T front() noexcept { return derived().front(); }
 
-  const T back() const noexcept { return derived().back(); }
+  T back() const noexcept { return derived().back(); }
 
   // Capacity
   size_t size() const noexcept { return derived().size(); }
