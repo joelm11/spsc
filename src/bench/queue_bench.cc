@@ -139,13 +139,64 @@ static void BM_QueueProduceConsume(benchmark::State &state) {
   }
 }
 
+// Template for tight interleaved benchmark
+template <typename QueueType>
+static void BM_QueueTightInterleaved(benchmark::State &state) {
+  for (auto _ : state) {
+    QueueType queue;
+    std::atomic<bool> start_flag{false};
+    constexpr int kTestSize = 20000;
+    constexpr int kQueueCapacity = 5; // Small capacity to force contention
+
+    auto producer = [&queue, &start_flag]() {
+      while (!start_flag.load(std::memory_order_acquire)) {
+        std::this_thread::yield();
+      }
+      typename QueueType::ValueType val{};
+      for (int i = 0; i < kTestSize;) {
+        if (queue.push(val)) {
+          ++i;
+        } else {
+          std::this_thread::yield();
+        }
+      }
+    };
+
+    auto consumer = [&queue, &start_flag]() {
+      int count = 0;
+      while (!start_flag.load(std::memory_order_acquire)) {
+        std::this_thread::yield();
+      }
+      while (count < kTestSize) {
+        if (!queue.empty()) {
+          queue.front(); // Read the value
+          if (queue.pop()) {
+            ++count;
+          }
+        } else {
+          std::this_thread::yield();
+        }
+      }
+    };
+
+    std::thread producer_thread(producer);
+    std::thread consumer_thread(consumer);
+
+    start_flag.store(true, std::memory_order_release);
+
+    producer_thread.join();
+    consumer_thread.join();
+  }
+}
+
 // Register benchmarks for queue types
-using LQueueType = spsc::LQueue<int, kQueueSize>;
-using AQueueType = spsc::AQueue<int, kQueueSize>;
+using LQueueType = spsc::LQueue<std::string, kQueueSize>;
+using AQueueType = spsc::AQueue<std::string, kQueueSize>;
 
 BENCHMARK_TEMPLATE(BM_QueuePush, LQueueType);
 BENCHMARK_TEMPLATE(BM_QueuePop, LQueueType);
 BENCHMARK_TEMPLATE(BM_QueueProduceConsume, LQueueType);
+BENCHMARK_TEMPLATE(BM_QueueTightInterleaved, LQueueType);
 // BENCHMARK_TEMPLATE(BM_QueuePushVal, LQueueType);
 // BENCHMARK_TEMPLATE(BM_QueuePopVal, LQueueType);
 // BENCHMARK_TEMPLATE(BM_QueueProduceConsumeVal, LQueueType);
@@ -153,6 +204,7 @@ BENCHMARK_TEMPLATE(BM_QueueProduceConsume, LQueueType);
 BENCHMARK_TEMPLATE(BM_QueuePush, AQueueType);
 BENCHMARK_TEMPLATE(BM_QueuePop, AQueueType);
 BENCHMARK_TEMPLATE(BM_QueueProduceConsume, AQueueType);
+BENCHMARK_TEMPLATE(BM_QueueTightInterleaved, AQueueType);
 // BENCHMARK_TEMPLATE(BM_QueuePushVal, AQueueType);
 // BENCHMARK_TEMPLATE(BM_QueuePopVal, AQueueType);
 // BENCHMARK_TEMPLATE(BM_QueueProduceConsumeVal, AQueueType);
