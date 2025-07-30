@@ -13,6 +13,8 @@ public:
   // Capacity
   size_t size() const noexcept { return derived().size(); }
 
+  size_t capacity() const noexcept { return derived().capacity(); }
+
   bool empty() const noexcept { return derived().empty(); }
 
   bool full() const noexcept { return derived().full(); }

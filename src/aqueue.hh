@@ -11,7 +11,7 @@ class AQueue : public QueueBase<T, AQueue<T, N>> {
 public:
   using ValueType = T;
 
-  AQueue() : front_(0), back_(0) {}
+  constexpr AQueue() : front_(0), back_(0) {}
 
   // Accessors
   T front() noexcept {
@@ -21,7 +21,7 @@ public:
 
   T back() const noexcept {
     const size_t kIdx =
-        (back_.load(std::memory_order::acquire) + kCapacity_ - 1) % kCapacity_;
+        (back_.load(std::memory_order::acquire) + kCapacity_ - 1) & kMask_;
     return data_[kIdx];
   }
 
@@ -29,22 +29,21 @@ public:
   size_t size() const noexcept {
     const size_t kFront = front_.load(std::memory_order::acquire);
     const size_t kBack = back_.load(std::memory_order::acquire);
-
-    return kBack >= kFront ? kBack - kFront : kCapacity_ - (kFront - kBack);
+    return (kBack - kFront) & kMask_;
   }
+
+  size_t capacity() const noexcept { return kCapacity_ - 1; }
 
   bool empty() const noexcept {
     const size_t kFront = front_.load(std::memory_order::acquire);
     const size_t kBack = back_.load(std::memory_order::acquire);
-
     return kFront == kBack;
   }
 
   bool full() const noexcept {
     const size_t kFront = front_.load(std::memory_order::acquire);
     const size_t kBack = back_.load(std::memory_order::acquire);
-
-    return (kBack + 1) % kCapacity_ == kFront;
+    return ((kBack + 1) & kMask_) == kFront;
   }
 
   // Modifiers
@@ -52,12 +51,11 @@ public:
     const size_t kFront = front_.load(std::memory_order::relaxed);
     const size_t kBack = back_.load(std::memory_order::acquire);
 
-    // Full
-    if ((kBack + 1) % kCapacity_ == kFront) {
-      return false;
+    if (((kBack + 1) & kMask_) == kFront) {
+      return false; // full
     }
     data_[kBack] = val;
-    back_.store((kBack + 1) % kCapacity_, std::memory_order::release);
+    back_.store((kBack + 1) & kMask_, std::memory_order::release);
     return true;
   }
 
@@ -65,11 +63,10 @@ public:
     const size_t kFront = front_.load(std::memory_order::acquire);
     const size_t kBack = back_.load(std::memory_order::relaxed);
 
-    // Empty
     if (kFront == kBack) {
-      return false;
+      return false; // empty
     }
-    front_.store((kFront + 1) % kCapacity_, std::memory_order::release);
+    front_.store((kFront + 1) & kMask_, std::memory_order::release);
     return true;
   }
 
@@ -77,12 +74,11 @@ public:
     const size_t kFront = front_.load(std::memory_order::relaxed);
     const size_t kBack = back_.load(std::memory_order::acquire);
 
-    // Full
-    if ((kBack + 1) % kCapacity_ == kFront) {
+    if (((kBack + 1) & kMask_) == kFront) {
       return false;
     }
     data_[kBack] = val;
-    back_.store((kBack + 1) % kCapacity_, std::memory_order::release);
+    back_.store((kBack + 1) & kMask_, std::memory_order::release);
     return true;
   }
 
@@ -90,17 +86,26 @@ public:
     const size_t kFront = front_.load(std::memory_order::acquire);
     const size_t kBack = back_.load(std::memory_order::relaxed);
 
-    // Empty
     if (kFront == kBack) {
       return false;
     }
     val = data_[kFront];
-    front_.store((kFront + 1) % kCapacity_, std::memory_order::release);
+    front_.store((kFront + 1) & kMask_, std::memory_order::release);
     return true;
   }
 
 private:
-  static constexpr size_t kCapacity_ = N + 1;
+  static constexpr size_t next_power_of_two(size_t n) {
+    size_t power = 1;
+    while (power < n) {
+      power <<= 1;
+    }
+    return power;
+  }
+
+  static constexpr size_t kCapacity_ = next_power_of_two(N + 1);
+  static constexpr size_t kMask_ = kCapacity_ - 1;
+
   alignas(128) std::atomic<size_t> front_;
   alignas(128) std::atomic<size_t> back_;
   alignas(128) T data_[kCapacity_];

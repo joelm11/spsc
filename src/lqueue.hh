@@ -25,6 +25,8 @@ public:
     return size_is();
   }
 
+  size_t capacity() const noexcept { return kCapacity_ - 1; }
+
   bool empty() const noexcept {
     std::lock_guard<std::mutex> lock(m_);
     return is_empty();

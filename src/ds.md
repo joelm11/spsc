@@ -23,3 +23,10 @@ Developing these datastructures is a way for me to learn about designing good SP
 - This queue uses a lock to synchronize reads and writes.
 - Attempts to push to a full queue should fail.
 - Attemps to pop from an empty queue should fail.
+
+### Atomic Queue - AQueue
+
+- This queue uses atomics to synchronize reads and writes.
+- Attempts to push to a full queue should fail.
+- Attemps to pop from an empty queue should fail.
+- This queue's actual size is the nearest_power_of_2(<user_size> + 1)

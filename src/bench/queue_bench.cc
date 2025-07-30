@@ -4,7 +4,7 @@
 #include <benchmark/benchmark.h>
 #include <thread>
 
-const size_t kQueueSize = 2048;
+const size_t kQueueSize = 2000;
 
 // Template for push benchmark
 template <typename QueueType>
@@ -140,8 +140,8 @@ static void BM_QueueProduceConsume(benchmark::State &state) {
 }
 
 // Register benchmarks for queue types
-using LQueueType = spsc::LQueue<std::string, kQueueSize>;
-using AQueueType = spsc::AQueue<std::string, kQueueSize>;
+using LQueueType = spsc::LQueue<int, kQueueSize>;
+using AQueueType = spsc::AQueue<int, kQueueSize>;
 
 BENCHMARK_TEMPLATE(BM_QueuePush, LQueueType);
 BENCHMARK_TEMPLATE(BM_QueuePop, LQueueType);
