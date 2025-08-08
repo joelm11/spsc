@@ -190,8 +190,8 @@ static void BM_QueueTightInterleaved(benchmark::State &state) {
 }
 
 // Register benchmarks for queue types
-using LQueueType = spsc::LQueue<std::string, kQueueSize>;
-using AQueueType = spsc::AQueue<std::string, kQueueSize>;
+using LQueueType = spsc::LQueue<int, kQueueSize>;
+using AQueueType = spsc::AQueue<int, kQueueSize>;
 
 BENCHMARK_TEMPLATE(BM_QueuePush, LQueueType);
 BENCHMARK_TEMPLATE(BM_QueuePop, LQueueType);

@@ -103,9 +103,8 @@ private:
     return power;
   }
 
-  static constexpr size_t kCapacity_ = next_power_of_two(N + 1);
+  alignas(128) static constexpr size_t kCapacity_ = next_power_of_two(N + 1);
   static constexpr size_t kMask_ = kCapacity_ - 1;
-
   alignas(128) std::atomic<size_t> front_;
   alignas(128) std::atomic<size_t> back_;
   alignas(128) T data_[kCapacity_];
